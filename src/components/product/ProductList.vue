@@ -40,10 +40,6 @@ export default {
 </script>
 
 <style scoped>
-.tag {
-  cursor: pointer;
-}
-
 .products--header {
   border-bottom: 1px solid #E8E8E8;
   padding-bottom: 15px;
