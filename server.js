@@ -9,7 +9,7 @@ const app = express();
 const PRODUCT_DATA_FILE = path.join(__dirname, 'server-product-data.json');
 const CART_DATA_FILE = path.join(__dirname, 'server-cart-data.json');
 
-app.set('port', (process.env.PORT || 3000));
+app.set('port', (process.env.PORT || 4000));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -21,14 +21,51 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/products', (req, res) => {
+// A fake API token our server validates
+const API_TOKEN = 'D6W69PRgCoDKgHZGJmRUNA';
+
+const extractToken = (req) => (
+  req.query.token
+);
+
+const authenticatedRoute = ((req, res, next) => {
+  const token = extractToken(req);
+
+  if (token) {
+    if (token === API_TOKEN) {
+      return next();
+    }
+    return res.status(403).json({
+      success: false,
+      error: 'Invalid token provided',
+    });
+  }
+  return res.status(403).json({
+    success: false,
+    error: 'No token provided. Supply token as query param `token`',
+  });
+});
+
+// Make things more noticeable in the UI by introducing a fake delay
+// to logins
+const FAKE_DELAY = 500; // ms
+app.post('/login', (req, res) => {
+  setTimeout(() => (
+    res.json({
+      success: true,
+      token: API_TOKEN,
+    })
+  ), FAKE_DELAY);
+});
+
+app.get('/products', authenticatedRoute, (req, res) => {
   fs.readFile(PRODUCT_DATA_FILE, (err, data) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(JSON.parse(data));
   });
 });
 
-app.get('/cart', (req, res) => {
+app.get('/cart', authenticatedRoute, (req, res) => {
   fs.readFile(CART_DATA_FILE, (err, data) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(JSON.parse(data));
@@ -43,6 +80,7 @@ app.post('/cart', (req, res) => {
       title: req.body.title,
       description: req.body.description,
       price: req.body.price,
+      image_tag: req.body.image_tag,
       quantity: 1,
     };
     let cartProductExists = false;
@@ -69,9 +107,8 @@ app.post('/cart/delete', (req, res) => {
       if (cartProduct.id === req.body.id && cartProduct.quantity > 1) {
         cartProduct.quantity -= 1;
       } else if (cartProduct.id === req.body.id && cartProduct.quantity === 1) {
-        const cartIndexToRemove = cartProducts
-          // eslint-disable-next-line no-shadow
-          .findIndex((cartProduct) => cartProduct.id === req.body.id);
+        // eslint-disable-next-line no-shadow,max-len
+        const cartIndexToRemove = cartProducts.findIndex((cartProduct) => cartProduct.id === req.body.id);
         cartProducts.splice(cartIndexToRemove, 1);
       }
     });
