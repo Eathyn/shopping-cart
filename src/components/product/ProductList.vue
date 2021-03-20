@@ -19,13 +19,16 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import ProductListItem from '@/components/product/ProductListItem.vue';
 
 export default {
   name: 'ProductList',
   computed: {
     ...mapGetters(['productItems']),
+  },
+  methods: {
+    ...mapActions(['getProductItems']),
   },
   created() {
     this.$store.dispatch('getProductItems');
@@ -37,10 +40,6 @@ export default {
 </script>
 
 <style scoped>
-.tag {
-  cursor: pointer;
-}
-
 .products--header {
   border-bottom: 1px solid #E8E8E8;
   padding-bottom: 15px;

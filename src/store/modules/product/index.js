@@ -12,9 +12,9 @@ const mutations = {
 };
 
 const actions = {
-  getProductItems({ commit }) {
+  getProductItems({ commit }, token) {
     axios
-      .get('/api/products')
+      .get(`/api/products?token=${token}`)
       .then((res) => {
         commit('UPDATE_PRODUCT_ITEMS', res.data);
       })
@@ -27,6 +27,8 @@ const actions = {
 const getters = {
   // eslint-disable-next-line no-shadow
   productItems: (state) => state.productItems,
+  // eslint-disable-next-line no-shadow,max-len
+  productItemFromId: (state) => (id) => state.productItems.find((productItem) => productItem.id === id),
 };
 
 const productModule = {
